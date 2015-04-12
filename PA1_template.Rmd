@@ -1,25 +1,127 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Assignment 1 - Reproducable Data"
+author: "aamin"
+date: "6 April 2015"
+output: html_document
 ---
 
-
-## Loading and preprocessing the data
-
-
-
-## What is mean total number of steps taken per day?
+example of `data`.
+[Sugiyama et al., Physiol Genomics 10:5&ndash;12,
+2002](http://www.ncbi.nlm.nih.gov/pubmed/12118100)
+bladibla
 
 
 
-## What is the average daily activity pattern?
+### Loading and preprocessing the data
+
+First, load libraries
+```{r echo=TRUE, message=FALSE, warning = FALSE}
+library(lubridate)
+library(dplyr)
+library(zoo)
+
+```
+
+
+Load csv data
+```{r}
+activitydata <- read.csv("repdata-data-activity\\activity.csv", header=TRUE,sep=",", )  
+```
+
+
+Preprocess data
+
+1. Put date in the correct format
+```{r}
+activitydata$date <- ymd(activitydata$date)
+```
+
+2. Convert intervals to time
+```{r message=FALSE, warning=FALSE, results='hide'}
+Sys.setlocale(category = "LC_TIME", locale = "US")
+activitydata <- mutate(activitydata, timeofday = format(as.POSIXct('0001-01-01 00:00:00') + interval*60, "%H:%M:%S")) # convert minutes into seconds, and convert to 24 hours time
+activitydata <- mutate(activitydata, combitime = paste(date, timeofday))
+activitydata$combitime <- strptime(activitydata$combitime, "%Y-%m-%d %H:%M:%S")
+
+```
+
+### What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps taken each day
+```{r}
+x <- sapply(split(activitydata$steps,activitydata$date ),sum)
+```
+
+2.  Make a histogram of the total number of steps taken each day
+```{r}
+hist(x, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+mean(x, na.rm = TRUE)
+median(x, na.rm = TRUE)
+```
+
+
+### What is the average daily activity pattern?
+
+1. A time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+groupbyhours <- group_by(activitydata[c("steps", "interval")], interval)
+meanhourly <- summarise(groupbyhours, avg=mean(steps, na.rm=TRUE))
+#meanhourly$timeofday <- strptime(meanhourly$timeofday, "%H:%M:%S")
+plot(meanhourly$interval, meanhourly$avg, type="l", xlab= "hour", ylab= "steps", col="black" , lwd=1)     
+
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+max_avg <- meanhourly[order(-meanhourly$avg),]
+max_avg[[1,1]] #in interval
+format(as.POSIXct('0001-01-01 00:00:00') + max_avg[[1,1]]*60, "%H:%M:%S") #in time format
+
+```
+
+### Inputing missing values
+There are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+1. The total number of missing values in the dataset (i.e. the total number of rows with NAs)
+
+```{r}
+start = head(activitydata,1)[1,5]
+end = tail(activitydata,1)[1,5]
+fulltimedate <- seq(start, end, by='5 min')
+fulltimedatetable <- data.frame(fulltimedate)
+colnames(fulltimedatetable)[[1]] <- "combitime"
+#print(head(fulltimedatetable,5))
+#print(head(activitydata,5))
+
+#total <- merge(activitydata[order(-combitime),],fulltimedatetable[order(-combitime),],by=c("combitime"))
+
+x <- data.frame(combitime=fulltimedatetable$combitime, steps=with(activitydata, steps[match(fulltimedatetable$combitime, activitydata$combitime)]))
+print(tail(x,5))
+```
+
+2. One strategy for filling in all of the missing values in the dataset, is to fill in the missing values of that interval for THAT day with the interval mean value across all days.
 
 
 
-## Imputing missing values
+
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
 
-## Are there differences in activity patterns between weekdays and weekends?
+### Are there differences in activity patterns between weekdays and weekends?
+bladibla
+
+### Session Info
+
+```{r sessionInfo, include=TRUE, echo=TRUE, results='markup'}
+sessionInfo()
+```
+
