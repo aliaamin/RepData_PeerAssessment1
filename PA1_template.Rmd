@@ -19,13 +19,21 @@ First, load libraries
 library(lubridate)
 library(dplyr)
 library(zoo)
-
+library(ggplot2)
+library(downloader)
 ```
 
 
 Load csv data
-```{r}
-activitydata <- read.csv("repdata-data-activity\\activity.csv", header=TRUE,sep=",", )  
+```{r warning=FALSE, results='hide'}
+
+URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+destfolder <- getwd()
+filesource <- "activity.zip"
+download(URL, dest=filesource , mode="wb") 
+unzip (filesource, exdir = destfolder)
+activitydata <- read.csv("activity.csv", header=TRUE,sep=",", )  
+
 ```
 
 
@@ -90,18 +98,7 @@ There are a number of days/intervals where there are missing values (coded as NA
 1. The total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
 ```{r}
-start = head(activitydata,1)[1,5]
-end = tail(activitydata,1)[1,5]
-fulltimedate <- seq(start, end, by='5 min')
-fulltimedatetable <- data.frame(fulltimedate)
-colnames(fulltimedatetable)[[1]] <- "combitime"
-#print(head(fulltimedatetable,5))
-#print(head(activitydata,5))
-
-#total <- merge(activitydata[order(-combitime),],fulltimedatetable[order(-combitime),],by=c("combitime"))
-
-x <- data.frame(combitime=fulltimedatetable$combitime, steps=with(activitydata, steps[match(fulltimedatetable$combitime, activitydata$combitime)]))
-print(tail(x,5))
+sum(is.na(activitydata$steps))
 ```
 
 2. One strategy for filling in all of the missing values in the dataset, is to fill in the missing values of that interval for THAT day with the interval mean value across all days.
@@ -117,7 +114,23 @@ print(tail(x,5))
 
 
 ### Are there differences in activity patterns between weekdays and weekends?
-bladibla
+
+
+Step 1: Determine if a date belongs to a weekday of weekend
+```{r results='hide'}
+activitydata <- mutate(activitydata, dayofweek = weekdays(activitydata$date))
+activitydata$dayofweek[activitydata$dayofweek == "Monday" | activitydata$dayofweek == "Tuesday"  | activitydata$dayofweek == "Wednesday"  | activitydata$dayofweek == "Thursday" | activitydata$dayofweek == "Friday"] <- "weekday"
+activitydata$dayofweek[activitydata$dayofweek == "Sunday" | activitydata$dayofweek == "Saturday"] <- "weekend"
+```
+
+Step 2: split data and generate image
+```{r}
+activitybyday <- group_by(activitydata[c("dayofweek", "interval", "steps")],dayofweek,interval)
+averageactivitybyday <- summarize(activitybyday,avg_steps=mean(steps, na.rm=TRUE)) 
+
+q <- qplot(interval, avg_steps, data = averageactivitybyday, facets=dayofweek~., geom=c("point","smooth"), method="lm")
+q + geom_line()  + ggtitle("Average steps weekend vs. weekday")
+```
 
 ### Session Info
 
