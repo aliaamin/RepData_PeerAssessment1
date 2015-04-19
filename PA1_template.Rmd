@@ -1,8 +1,9 @@
 ---
 title: "Assignment 1 - Reproducable Data"
 author: "aamin"
-date: "6 April 2015"
-output: html_document
+date: "19 April 2015"
+output: html_document:
+        keep_md: true
 ---
 
 
