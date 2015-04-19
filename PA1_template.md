@@ -16,7 +16,6 @@ First, load libraries
 library(downloader)
 library(lubridate)
 library(dplyr)
-library(zoo)
 library(ggplot2)
 ```
 
