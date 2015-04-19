@@ -41,14 +41,6 @@ Preprocess data
 activitydata$date <- ymd(activitydata$date)
 ```
 
-2. Convert intervals to time
-
-```r
-Sys.setlocale(category = "LC_TIME", locale = "US")
-activitydata <- mutate(activitydata, timeofday = format(as.POSIXct('0001-01-01 00:00:00') + interval*60, "%H:%M:%S")) # convert minutes into seconds, and convert to 24 hours time
-activitydata <- mutate(activitydata, combitime = paste(date, timeofday))
-activitydata$combitime <- strptime(activitydata$combitime, "%Y-%m-%d %H:%M:%S")
-```
 
 ### What is mean total number of steps taken per day?
 
@@ -64,7 +56,7 @@ x <- sapply(split(activitydata$steps,activitydata$date ),sum)
 hist(x, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 
 3. Calculate and report the mean and median of the total number of steps taken per day
 
@@ -92,11 +84,10 @@ median(x, na.rm = TRUE)
 ```r
 groupbyhours <- group_by(activitydata[c("steps", "interval")], interval)
 meanhourly <- summarise(groupbyhours, avg=mean(steps, na.rm=TRUE))
-#meanhourly$timeofday <- strptime(meanhourly$timeofday, "%H:%M:%S")
 plot(meanhourly$interval, meanhourly$avg, type="l", xlab= "hour", ylab= "steps", col="black" , lwd=1)     
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
@@ -131,15 +122,8 @@ sum(is.na(activitydata$steps))
 
 
 ```r
-activitydatacomp <- activitydata
-
-for (i in 1:nrow(activitydatacomp))
-{
-        if (is.na(activitydatacomp$steps[i]))
-        {
-                activitydatacomp$steps[i] <- meanhourly$avg[which(activitydatacomp$interval[i] == meanhourly$interval)]
-        }   
-}
+meansActivityVector<-tapply(activitydata$steps,activitydata$interval,mean,na.rm=TRUE) 
+completeMeansActivityVector<-ifelse(is.na(activitydata$steps), meansActivityVector, activitydata$steps)
 ```
 
 
@@ -149,42 +133,42 @@ for (i in 1:nrow(activitydatacomp))
 
 ```r
 #new dataset is called activitydatacomp
-print(str(activitydatacomp))
+activitydatacomp<-data.frame(completeMeansActivityVector,activitydata$date,activitydata$interval) 
+colnames(activitydatacomp) <- c( 'steps', 'date', 'interval')
+str(activitydatacomp)
 ```
 
 ```
-## 'data.frame':	17568 obs. of  5 variables:
-##  $ steps    : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
-##  $ date     : POSIXct, format: "2012-10-01" "2012-10-01" ...
-##  $ interval : int  0 5 10 15 20 25 30 35 40 45 ...
-##  $ timeofday: chr  "00:00:00" "00:05:00" "00:10:00" "00:15:00" ...
-##  $ combitime: POSIXlt, format: "2012-10-01 00:00:00" "2012-10-01 00:05:00" ...
-## NULL
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
+##  $ date    : POSIXct, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
 ```r
-hist(activitydatacomp$steps, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
+xx <- sapply(split(activitydatacomp$steps,activitydatacomp$date ),sum)
+hist(xx, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png) 
-
-```r
-mean(activitydatacomp$steps)
-```
-
-```
-## [1] 37.3826
-```
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png) 
 
 ```r
-median(activitydatacomp$steps)
+mean(xx)
 ```
 
 ```
-## [1] 0
+## [1] 10766.19
+```
+
+```r
+median(xx)
+```
+
+```
+## [1] 10766.19
 ```
 
 
@@ -211,7 +195,7 @@ q <- qplot(interval, avg_steps, data = averageactivitybyday, facets=dayofweek~.,
 q + geom_line()  + ggtitle("Average steps weekend vs. weekday")
 ```
 
-![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png) 
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png) 
 
 ### Session Info
 

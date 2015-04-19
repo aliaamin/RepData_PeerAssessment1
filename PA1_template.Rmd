@@ -40,14 +40,6 @@ Preprocess data
 activitydata$date <- ymd(activitydata$date)
 ```
 
-2. Convert intervals to time
-```{r message=FALSE, warning=FALSE, results='hide'}
-Sys.setlocale(category = "LC_TIME", locale = "US")
-activitydata <- mutate(activitydata, timeofday = format(as.POSIXct('0001-01-01 00:00:00') + interval*60, "%H:%M:%S")) # convert minutes into seconds, and convert to 24 hours time
-activitydata <- mutate(activitydata, combitime = paste(date, timeofday))
-activitydata$combitime <- strptime(activitydata$combitime, "%Y-%m-%d %H:%M:%S")
-
-```
 
 ### What is mean total number of steps taken per day?
 
@@ -74,7 +66,6 @@ median(x, na.rm = TRUE)
 ```{r}
 groupbyhours <- group_by(activitydata[c("steps", "interval")], interval)
 meanhourly <- summarise(groupbyhours, avg=mean(steps, na.rm=TRUE))
-#meanhourly$timeofday <- strptime(meanhourly$timeofday, "%H:%M:%S")
 plot(meanhourly$interval, meanhourly$avg, type="l", xlab= "hour", ylab= "steps", col="black" , lwd=1)     
 
 ```
@@ -99,16 +90,8 @@ sum(is.na(activitydata$steps))
 2. One strategy for filling in all of the missing values in the dataset, is to simply fill in the missing values with mean value across all days.
 
 ```{r}
-activitydatacomp <- activitydata
-
-for (i in 1:nrow(activitydatacomp))
-{
-        if (is.na(activitydatacomp$steps[i]))
-        {
-                activitydatacomp$steps[i] <- meanhourly$avg[which(activitydatacomp$interval[i] == meanhourly$interval)]
-        }   
-}
-
+meansActivityVector<-tapply(activitydata$steps,activitydata$interval,mean,na.rm=TRUE) 
+completeMeansActivityVector<-ifelse(is.na(activitydata$steps), meansActivityVector, activitydata$steps)
 ```
 
 
@@ -117,15 +100,20 @@ for (i in 1:nrow(activitydatacomp))
 
 ```{r}
 #new dataset is called activitydatacomp
-print(str(activitydatacomp))
+activitydatacomp<-data.frame(completeMeansActivityVector,activitydata$date,activitydata$interval) 
+colnames(activitydatacomp) <- c( 'steps', 'date', 'interval')
+str(activitydatacomp)
+
 ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 ```{r}
-hist(activitydatacomp$steps, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
-mean(activitydatacomp$steps)
-median(activitydatacomp$steps)
+
+xx <- sapply(split(activitydatacomp$steps,activitydatacomp$date ),sum)
+hist(xx, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
+mean(xx)
+median(xx)
 ```
 
 
