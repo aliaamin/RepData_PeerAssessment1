@@ -2,8 +2,9 @@
 title: "Assignment 1 - Reproducable Data"
 author: "aamin"
 date: "19 April 2015"
-output: html_document:
-        keep_md: true
+output:
+  html_document:
+    keep_md: yes
 ---
 
 
