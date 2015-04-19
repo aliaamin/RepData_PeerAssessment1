@@ -5,22 +5,16 @@ date: "6 April 2015"
 output: html_document
 ---
 
-example of `data`.
-[Sugiyama et al., Physiol Genomics 10:5&ndash;12,
-2002](http://www.ncbi.nlm.nih.gov/pubmed/12118100)
-bladibla
-
-
 
 ### Loading and preprocessing the data
 
 First, load libraries
 ```{r echo=TRUE, message=FALSE, warning = FALSE}
+library(downloader)
 library(lubridate)
 library(dplyr)
 library(zoo)
 library(ggplot2)
-library(downloader)
 ```
 
 
@@ -87,8 +81,7 @@ plot(meanhourly$interval, meanhourly$avg, type="l", xlab= "hour", ylab= "steps",
 
 ```{r}
 max_avg <- meanhourly[order(-meanhourly$avg),]
-max_avg[[1,1]] #in interval
-format(as.POSIXct('0001-01-01 00:00:00') + max_avg[[1,1]]*60, "%H:%M:%S") #in time format
+max_avg[1,] #in interval
 
 ```
 
@@ -101,15 +94,38 @@ There are a number of days/intervals where there are missing values (coded as NA
 sum(is.na(activitydata$steps))
 ```
 
-2. One strategy for filling in all of the missing values in the dataset, is to fill in the missing values of that interval for THAT day with the interval mean value across all days.
+2. One strategy for filling in all of the missing values in the dataset, is to simply fill in the missing values with mean value across all days.
 
+```{r}
+activitydatacomp <- activitydata
 
+for (i in 1:nrow(activitydatacomp))
+{
+        if (is.na(activitydatacomp$steps[i]))
+        {
+                activitydatacomp$steps[i] <- meanhourly$avg[which(activitydatacomp$interval[i] == meanhourly$interval)]
+        }   
+}
+
+```
 
 
 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
+```{r}
+#new dataset is called activitydatacomp
+print(str(activitydatacomp))
+```
+
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r}
+hist(activitydatacomp$steps, xlab = "total number of steps", main="The distribution of total numbers of steps each day")
+mean(activitydatacomp$steps)
+median(activitydatacomp$steps)
+```
+
 
 
 
